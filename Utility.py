@@ -83,6 +83,7 @@ def replace_missing_with_value_from_another_df(
             if rd_no and rd_no in lookup_dict:  # Controlla se RD_NO è valido e presente in lookup_dict
                 record[target_column_main] = lookup_dict[rd_no]  # Sostituisce il valore mancante
 
+
 # Function to replace missing values in a column with random values with a fixed proportion
 def assign_random_values(data, attribute, values, probabilities):
 
