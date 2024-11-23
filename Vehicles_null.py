@@ -37,7 +37,10 @@ replacements_crashes_location = {
 }
 
 crashes = apply_replacements(crashes, replacements_crashes_street_name, 'STREET_NAME')
+
 crashes = apply_replacements(crashes, replacements_crashes_street_name, 'LOCATION')
+
+crashes = apply_replacements(crashes, replacements_crashes_location, 'LOCATION')
 
 crashes = fill_missing_geolocation(crashes, 'STREET_NO', 'STREET_DIRECTION', 'STREET_NAME', 'LATITUDE', 'LONGITUDE', 'LOCATION')
 
@@ -104,7 +107,6 @@ replacements_people = {
 
 people =apply_replacements(people, replacements_people, 'PERSON_TYPE')
 
-
 # UNIT_TYPE Replacement
 people =replace_nulls(people, 'VEHICLE_ID', -1.0)
 
@@ -128,7 +130,6 @@ people =replace_nulls(people, 'INJURY_CLASSIFICATION', 'UNKNOWN INJURIES')
 people =replace_nulls(people, 'DRIVER_ACTION', 'UNKNOWN')
 people =replace_nulls(people, 'DRIVER_VISION', 'UNKNOWN')
 people =replace_nulls(people, 'PHYSICAL_CONDITION', 'UNKNOWN')
-
 
 # BAC_RESULT Replacement
 people =replace_nulls(people, 'BAC_RESULT', 'UNKNOWN')
