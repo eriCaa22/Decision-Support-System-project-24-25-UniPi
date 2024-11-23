@@ -1,25 +1,23 @@
 from jupyter_server.base.handlers import RedirectWithParams
 
-from Utility_Missing_values import replace_nulls, apply_replacements, replace_nulls_with_conditions, fill_missing_geolocation
-from Utility import load_csv
+from Utility_Missing_values import replace_nulls, apply_replacements, replace_nulls_with_conditions, fill_missing_geolocation, remove_null_rows
+from Utility import load_csv, save_to_csv, check_null_values
 
-
-vehicles = load_csv('LDS24 - Data/Vehicles.csv')
-crashes = load_csv('LDS24 - Data/Crashes.csv')
-people = load_csv('LDS24 - Data/People.csv')
+vehicles = load_csv('C:/Users/al797/DSS LAB/Vehicles.csv')
+crashes = load_csv('C:/Users/al797//DSS LAB/Crashes.csv')
+people = load_csv('C:/Users/al797/DSS LAB/People.csv')
 
 ##########################################################################
 ############################ CRASHES DATASET #############################
 ##########################################################################
 
 
-replace_nulls(crashes, 'STREET_NAME', '76TH ST')
+crashes = replace_nulls(crashes, 'STREET_NAME', '76TH ST')
 
-# AVEVANO 0 A TUTTO
-replace_nulls(crashes, 'MOST_SEVERE_INJURY', 'NO INDICATION OF INJURY')
-# %%
-replace_nulls(crashes, 'REPORT_TYPE', 'NOT ON SCENE (DESK REPORT)')
-# %%
+crashes = replace_nulls(crashes, 'MOST_SEVERE_INJURY', 'NO INDICATION OF INJURY')
+
+crashes = replace_nulls(crashes, 'REPORT_TYPE', 'NOT ON SCENE (DESK REPORT)')
+
 replacements_crashes_street_name = {
     'STREET_DIRECTION': {
         'DOTY AVE W': 'S',
@@ -38,10 +36,10 @@ replacements_crashes_location = {
 },
 }
 
-apply_replacements(crashes, replacements_crashes_street_name, 'STREET_NAME')
-apply_replacements(crashes, replacements_crashes_street_name, 'LOCATION')
+crashes = apply_replacements(crashes, replacements_crashes_street_name, 'STREET_NAME')
+crashes = apply_replacements(crashes, replacements_crashes_street_name, 'LOCATION')
 
-fill_missing_geolocation(crashes, 'STREET_NO', 'STREET_DIRECTION', 'STREET_NAME', 'LATITUDE', 'LONGITUDE', 'LOCATION')
+crashes = fill_missing_geolocation(crashes, 'STREET_NO', 'STREET_DIRECTION', 'STREET_NAME', 'LATITUDE', 'LONGITUDE', 'LOCATION')
 
 
 # ###### Per i null values che con GeoPy non siamo riusciti a fillare, , abbiamo creato con pandas un dizionario che, per ogni strada che non ha lat e log, calcola la media di latitudine e longitudine per i record riferiti alla stessa strada che hanno la location.
@@ -79,29 +77,6 @@ for street_name, coordinates in street_mean_coordinates.items():
     location_value = f"POINT({latitude} {longitude})"
 
     replace_nulls_with_conditions(crashes, 'STREET_NAME', street_name, 'LOCATION', location_value)
-# %%
-
-# %%
-def print_rows_with_null_unit_type(ds):
-    # Identifica i valori considerati come nulli
-    null_values = [None, " ", "null", "none", "nan", "NaN", ""]
-
-    # Filtra le righe con 'unit type' nullo
-    null_rows = [record for record in ds if record.get("LOCATION").strip().lower() in null_values]
-
-    # Stampa le righe con 'unit type' nullo
-    if null_rows:
-        print("Righe con 'unit type' nullo:")
-        for row in null_rows:
-            print(row)
-    else:
-        print("Non ci sono righe con 'unit type' nullo.")
-
-
-# Chiamata della funzione sul tuo dataset
-print_rows_with_null_unit_type(crashes)
-
-
 
 
 ##########################################################################
@@ -127,39 +102,39 @@ replacements_people = {
 
 }
 
-apply_replacements(people, replacements_people, 'PERSON_TYPE')
+people =apply_replacements(people, replacements_people, 'PERSON_TYPE')
 
 
 # UNIT_TYPE Replacement
-replace_nulls(people, 'VEHICLE_ID', -1.0)
+people =replace_nulls(people, 'VEHICLE_ID', -1.0)
 
 # CITY Replacement
-replace_nulls(people, 'CITY', 'CHICAGO')
+people = replace_nulls(people, 'CITY', 'CHICAGO')
 
 # STATE Replacement
-replace_nulls(people, 'STATE', 'IL')
+people =replace_nulls(people, 'STATE', 'IL')
 
 # SEX Replacement
-replace_nulls(people, 'SEX', 'U')
+people = replace_nulls(people, 'SEX', 'U')
 
 # AGE Replacement (Using Median)
-replace_nulls(people, 'AGE', 36)
+people =replace_nulls(people, 'AGE', 36)
 
 # SAFETY_EQUIPMENT Replacement
-replace_nulls(people, 'SAFETY_EQUIPMENT', 'USAGE UNKNOWN')
+people =replace_nulls(people, 'SAFETY_EQUIPMENT', 'USAGE UNKNOWN')
 
 # INJURY_CLASSIFICATION Replacement
-replace_nulls(people, 'INJURY_CLASSIFICATION', 'UNKNOWN INJURIES')
-replace_nulls(people, 'DRIVER_ACTION', 'UNKNOWN')
-replace_nulls(people, 'DRIVER_VISION', 'UNKNOWN')
-replace_nulls(people, 'PHYSICAL_CONDITION', 'UNKNOWN')
+people =replace_nulls(people, 'INJURY_CLASSIFICATION', 'UNKNOWN INJURIES')
+people =replace_nulls(people, 'DRIVER_ACTION', 'UNKNOWN')
+people =replace_nulls(people, 'DRIVER_VISION', 'UNKNOWN')
+people =replace_nulls(people, 'PHYSICAL_CONDITION', 'UNKNOWN')
 
 
 # BAC_RESULT Replacement
-replace_nulls(people, 'BAC_RESULT', 'UNKNOWN')
+people =replace_nulls(people, 'BAC_RESULT', 'UNKNOWN')
 
 # DAMAGE Replacement
-replace_nulls(people, 'DAMAGE', '250.00')
+people = replace_nulls(people, 'DAMAGE', '250.00')
 
 # Round DAMAGE to two decimal places
 for record in people:
@@ -243,14 +218,24 @@ rep_veic = {
 }
 
 # Applicare le sostituzioni condizionali
-apply_replacements(vehicles, replacements_vehicles, 'UNIT_TYPE')
+vehicles = apply_replacements(vehicles, replacements_vehicles, 'UNIT_TYPE')
 
 # Altre trasformazioni
-replace_nulls(vehicles, 'VEHICLE_ID', -1.0)
-replace_nulls(vehicles, 'UNIT_TYPE', 'BICYCLE')
-replace_nulls(vehicles, 'VEHICLE_USE', 'UNKNOWN/NA')
-replace_nulls(vehicles, 'VEHICLE_YEAR', -1.0)
-replace_nulls(vehicles, 'TRAVEL_DIRECTION', 'UNKNOWN')
-replace_nulls(vehicles, 'MANEUVER', 'UNKNOWN/NA')
-replace_nulls(vehicles, 'OCCUPANT_CNT', -1.0)
+vehicles = replace_nulls(vehicles, 'VEHICLE_ID', -1.0)
+vehicles = replace_nulls(vehicles, 'UNIT_TYPE', 'BICYCLE')
+vehicles = replace_nulls(vehicles, 'VEHICLE_USE', 'UNKNOWN/NA')
+vehicles = replace_nulls(vehicles, 'VEHICLE_YEAR', -1.0)
+vehicles = replace_nulls(vehicles, 'TRAVEL_DIRECTION', 'UNKNOWN')
+vehicles = replace_nulls(vehicles, 'MANEUVER', 'UNKNOWN/NA')
+vehicles = replace_nulls(vehicles, 'OCCUPANT_CNT', -1.0)
 
+crashes = remove_null_rows(crashes, 'LOCATION')
+
+# Salva i dataset modificati
+save_to_csv(crashes, 'C:/Users/al797/Desktop/Crashes_filled.csv')
+save_to_csv(people, 'C:/Users/al797/Desktop/People_filled.csv')
+save_to_csv(vehicles, 'C:/Users/al797/Desktop/Vehicles_filled.csv')
+
+check_null_values(crashes)
+check_null_values(vehicles)
+check_null_values(people)
