@@ -1,5 +1,6 @@
 import csv
 
+
 # LOAD DATASET
 def load_csv(filepath):
     with open(filepath, mode='r') as file:
@@ -32,4 +33,4 @@ def check_null_values(data):
             if value in null_values:
                 null_counts[column] = null_counts.get(column, 0) + 1
 
-    return null_counts
+    return "Valori: ", null_counts
