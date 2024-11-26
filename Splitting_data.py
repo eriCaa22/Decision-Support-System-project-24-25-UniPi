@@ -99,14 +99,14 @@ col_to_keep_roadcond = ['ROAD_CONDITION_PK', 'TRAFFIC_CONTROL_DEVICE', 'DEVICE_C
 col_to_keep_damage = ['DAMAGE_PK', 'DAMAGE', 'NUM_UNITS' ]
 
 # Filtra il dataset e salva in un nuovo file
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_vehicle)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_geography)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_crashes)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_date)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_person)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_cause)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_roadcond)
-filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/prova.csv', col_to_keep_damage)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Vehicle.csv', col_to_keep_vehicle)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Geography.csv', col_to_keep_geography)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Crash.csv', col_to_keep_crashes)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/CrashDate.csv', col_to_keep_date)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Person.csv', col_to_keep_person)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Cause.csv', col_to_keep_cause)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/RoadCondition.csv', col_to_keep_roadcond)
+filter_columns('LDS24 - Data/Merged_output.csv', 'LDS24 - Data/Damage.csv', col_to_keep_damage)
 
 
 
