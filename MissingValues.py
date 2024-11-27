@@ -1,5 +1,4 @@
-from jupyter_server.base.handlers import RedirectWithParams
-from collections import defaultdict
+# from collections import defaultdict
 from Utility_Missing_values import replace_nulls, apply_replacements, replace_nulls_with_conditions, fill_missing_geolocation, remove_null_rows
 from Utility import load_csv, save_to_csv, check_null_values
 
@@ -47,7 +46,7 @@ crashes = fill_missing_geolocation(crashes, 'STREET_NO', 'STREET_DIRECTION', 'ST
 
 # ###### Per i null values che con GeoPy non siamo riusciti a fillare, , abbiamo creato con pandas un dizionario che, per ogni strada che non ha lat e log, calcola la media di latitudine e longitudine per i record riferiti alla stessa strada che hanno la location.
 # ##### Alcune strade non hanno altri record che presentano la location, perciò andremo ad eliminarle
-"""G 
+""" 
 from collections import defaultdict
 
 # Struttura per raccogliere le coordinate delle strade
@@ -119,7 +118,9 @@ for street_name, coordinates in street_mean_coordinates.items():
 
     replace_nulls_with_conditions(crashes, 'STREET_NAME', street_name, 'LOCATION', location_value)
 
-
+crashes = replace_nulls(crashes, 'LOCATION', 'UNKNOWN')
+crashes = replace_nulls(crashes, 'LATITUDE', -1)
+crashes = replace_nulls(crashes, 'LONGITUDE', -1)
 
 ##########################################################################
 ############################ PEOPLE DATASET ##############################
@@ -247,20 +248,8 @@ replacements_vehicles = {
     },
 }
 
-rep_veic = {
-    'VEHICLE_ID': -1.0,
-    'UNIT_TYPE': 'BICYCLE',
-    'VEHICLE_USE': 'UNKNOWN/NA',
-    'VEHICLE_YEAR': -1.0,
-    'TRAVEL_DIRECTION': 'UNKNOWN',
-    'MANEUVER': 'UNKNOWN/NA',
-    'OCCUPANT_CNT': -1.0,
-}
-
-# Applicare le sostituzioni condizionali
 vehicles = apply_replacements(vehicles, replacements_vehicles, 'UNIT_TYPE')
 
-# Altre trasformazioni
 vehicles = replace_nulls(vehicles, 'VEHICLE_ID', -1.0)
 vehicles = replace_nulls(vehicles, 'UNIT_TYPE', 'BICYCLE')
 vehicles = replace_nulls(vehicles, 'VEHICLE_USE', 'UNKNOWN/NA')
@@ -268,9 +257,14 @@ vehicles = replace_nulls(vehicles, 'VEHICLE_YEAR', -1.0)
 vehicles = replace_nulls(vehicles, 'TRAVEL_DIRECTION', 'UNKNOWN')
 vehicles = replace_nulls(vehicles, 'MANEUVER', 'UNKNOWN/NA')
 vehicles = replace_nulls(vehicles, 'OCCUPANT_CNT', -1.0)
-vehicles = remove_null_rows(crashes, 'MODEL')
 
-crashes = remove_null_rows(crashes, 'LOCATION')
+#DEALING WITH THE LAST ROW STANDING
+vehicles = replace_nulls(vehicles, 'MAKE', 'UNKNOWN')
+vehicles = replace_nulls(vehicles, 'MODEL', 'UNKNOWN')
+vehicles = replace_nulls(vehicles, 'LIC_PLATE_STATE', 'XX')
+vehicles = replace_nulls(vehicles, 'VEHICLE_DEFECT', 'UNKNOWN')
+vehicles = replace_nulls(vehicles, 'VEHICLE_TYPE', 'UNKNOWN')
+vehicles = replace_nulls(vehicles, 'FIRST_CONTACT_POINT', 'UNKNOWN')
 
 # Salva i dataset modificati
 save_to_csv(crashes, 'C:/Users/al797/Desktop/Crashes_filled.csv')

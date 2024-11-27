@@ -11,9 +11,10 @@ def replace_nulls(ds, column_name, replacement_value):
     for record in ds:
         if column_name in record:
             value = record[column_name]
-            if value is None or value.strip().lower() in ["", "null", "none"]:
+            if value is None or (isinstance(value, str) and value.strip().lower() in ["", "null", "none"]):
                 record[column_name] = replacement_value
     return ds
+
 
 # REPLACE NULL VALUES IN THE SPECIFIED COLUMN WITH THE SPECIFIED VALUE IF ANOTHER COLUMN HAS A SPECIFIC VALUE
 def replace_nulls_with_conditions(ds, column_name_to_check, target_value, column_to_replace, replacement_value):
