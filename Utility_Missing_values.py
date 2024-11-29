@@ -1,10 +1,29 @@
 from geopy.geocoders import Nominatim
 import time
+from collections import defaultdict
+import csv
 
-# REMOVE ROWS WITH NULL VALUE FOR THE SPECIFIED CCOLUMN
-def remove_null_rows(data, column_name):
-    null_values = [None, "", " ", "null", "none", "nan", "NaN"]
-    return [row for row in data if row.get(column_name) not in null_values]
+# LOAD DATASET
+def load_csv(filepath):
+    with open(filepath, mode='r') as file:
+        reader = csv.DictReader(file)
+        return [row for row in reader]
+
+#SAVE CSV
+def save_to_csv(data, file_path):
+    if not data:
+        print(f"Dataset vuoto, impossibile salvare il file: {file_path}")
+        return
+
+    columns = data[0].keys()
+
+    with open(file_path, mode='w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=columns)
+
+        writer.writeheader()
+        writer.writerows(data)
+    print(f"File salvato correttamente: {file_path}")
+
 
 # REPLACE NULL VALUES IN THE SPECIFIED COLUMN WITH THE SPECIFIED VALUE
 def replace_nulls(ds, column_name, replacement_value):
@@ -23,7 +42,7 @@ def replace_nulls_with_conditions(ds, column_name_to_check, target_value, column
             record[column_to_replace] = replacement_value
     return ds
 
-
+# FUNZIONE PER APPLICARE LE SOSTITUZIONI
 def apply_replacements(dataset, replacements_dict, column_check):
     for column, conditions in replacements_dict.items():
         for unit_type, replacement_value in conditions.items():
@@ -35,19 +54,6 @@ def apply_replacements(dataset, replacements_dict, column_check):
 geolocator = Nominatim(user_agent="incident_locator")
 def fill_missing_geolocation(data, street_no_col, street_dir_col, street_name_col, lat_col, lon_col, loc_col,
                              city="Chicago", state="IL", pause=1):
-    """
-    Parameters:
-    - data: Lista di record (dataset) su cui operare.
-    - street_no_col: Nome della colonna del numero civico.
-    - street_dir_col: Nome della colonna della direzione della strada.
-    - street_name_col: Nome della colonna del nome della strada.
-    - lat_col: Nome della colonna per la latitudine.
-    - lon_col: Nome della colonna per la longitudine.
-    - loc_col: Nome della colonna per l'indirizzo completo.
-    - city: Città di default per costruire l'indirizzo (default: Chicago).
-    - state: Stato di default per costruire l'indirizzo (default: IL).
-    - pause: Pausa (in secondi) tra le richieste per evitare il limite API (default: 1).
-    """
 
     # Funzione interna per geocodificare un indirizzo
     def get_lat_lon_location(street_no, street_direction, street_name):
@@ -76,7 +82,6 @@ def fill_missing_geolocation(data, street_no_col, street_dir_col, street_name_co
 
     return data
 
-from collections import defaultdict
 
 def calculate_mean_coordinates(dataset, street_name, latitude, longitude):
 
@@ -105,5 +110,16 @@ def calculate_mean_coordinates(dataset, street_name, latitude, longitude):
 
     return street_mean_coordinates
 
+# CHECK IF THERE ARE NULL VALUES
 
+def check_null_values(data):
+    null_counts = {}
 
+    null_values = [None, "", " ", "null", "none", "nan", "NaN"]
+
+    for row in data:
+        for column, value in row.items():
+            if value in null_values:
+                null_counts[column] = null_counts.get(column, 0) + 1
+
+    return "Valori: ", null_counts

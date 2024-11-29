@@ -1,7 +1,5 @@
 # from collections import defaultdict
-from Utility_Missing_values import replace_nulls, apply_replacements, replace_nulls_with_conditions, fill_missing_geolocation, remove_null_rows
-from Utility import load_csv, save_to_csv, check_null_values
-
+from Utility_Missing_values import replace_nulls, apply_replacements, replace_nulls_with_conditions, fill_missing_geolocation, check_null_values, load_csv, save_to_csv
 vehicles = load_csv('C:/Users/al797/DSS LAB/Vehicles.csv')
 crashes = load_csv('C:/Users/al797//DSS LAB/Crashes.csv')
 people = load_csv('C:/Users/al797/DSS LAB/People.csv')
