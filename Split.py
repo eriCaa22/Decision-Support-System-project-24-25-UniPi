@@ -45,14 +45,23 @@ def create_csv_for_table(input_file, output_file, columns_to_keep, date_column=N
         reader = csv.DictReader(input_csv)
 
         # Identifica le colonne da mantenere
+        '''
         valid_columns = [col for col in columns_to_keep if col in reader.fieldnames]
+        if not valid_columns:
+            raise ValueError("Nessuna delle colonne specificate è presente nel dataset.") '''
+
+        valid_columns = []
+        for col in columns_to_keep:
+            if col in reader.fieldnames:
+                valid_columns.append(col)
+
         if not valid_columns:
             raise ValueError("Nessuna delle colonne specificate è presente nel dataset.")
 
         writer = csv.DictWriter(output_csv, fieldnames=valid_columns)
         writer.writeheader()
 
-        for row in reader:
+        '''for row in reader:
 
             # Filtra solo le colonne valide
             filtered_row = {col: row.get(col, '') for col in valid_columns}
@@ -66,7 +75,31 @@ def create_csv_for_table(input_file, output_file, columns_to_keep, date_column=N
 
             # Aggiungi la riga al set di righe viste e scrivila nel file di output
             seen_rows.add(row_identifier)
+            writer.writerow(filtered_row)'''
+        for row in reader:
+            # Inizializza un dizionario per la riga filtrata
+            filtered_row = {}
+            for col in valid_columns:
+                # Aggiungi al dizionario il valore della colonna o una stringa vuota se non presente
+                filtered_row[col] = row.get(col, '')
+
+            # Genera l'identificatore univoco come tupla
+            row_identifier = []
+            for col in valid_columns:
+                if col in filtered_row:
+                    row_identifier.append(filtered_row[col])
+            row_identifier = tuple(row_identifier)
+
+            # Controlla se l'identificatore è già stato visto
+            if row_identifier in seen_rows:
+                continue
+
+            # Aggiungi l'identificatore al set di quelli visti
+            seen_rows.add(row_identifier)
+
+            # Scrivi la riga filtrata nel writer
             writer.writerow(filtered_row)
+
 
 def create_csv_for_data(input_file, output_file, columns_to_keep):
     # Lista per salvare le righe elaborate
@@ -78,7 +111,14 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
         reader = csv.DictReader(input_csv)
 
         # Identifica le colonne da mantenere che esistono nel dataset
-        valid_columns = [col for col in columns_to_keep if col in reader.fieldnames]
+        '''valid_columns = [col for col in columns_to_keep if col in reader.fieldnames]
+        if not valid_columns:
+            raise ValueError("Nessuna delle colonne specificate è presente nel dataset.")'''
+        valid_columns = []
+        for col in columns_to_keep:
+            if col in reader.fieldnames:
+                valid_columns.append(col)
+
         if not valid_columns:
             raise ValueError("Nessuna delle colonne specificate è presente nel dataset.")
 
@@ -94,7 +134,10 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
         for row in reader:
             try:
                 # Filtra le colonne richieste
-                filtered_row = {col: row[col] for col in valid_columns}
+                filtered_row = {}
+                for col in valid_columns:
+                    if col in row:  # Verifica se la colonna esiste nella riga
+                        filtered_row[col] = row[col]
 
                 # Estrazione e conversione del campo CRASH_DATE
                 crash_date_time = filtered_row.get('CRASH_DATE')  # Es. "2015-09-01 17:00:00"
