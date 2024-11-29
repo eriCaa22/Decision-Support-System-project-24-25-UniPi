@@ -71,6 +71,7 @@ def create_csv_for_table(input_file, output_file, columns_to_keep, date_column=N
 def create_csv_for_data(input_file, output_file, columns_to_keep):
     # Lista per salvare le righe elaborate
     data_rows = []
+    seen_rows = set()  # Set per tracciare le righe già viste
 
     with open(input_file, mode='r', encoding='utf-8') as input_csv, \
             open(output_file, mode='w', encoding='utf-8', newline='') as output_csv:
@@ -116,7 +117,7 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
                 date_text_pol = date_pol.strftime('%Y-%m-%d %H:%M:%S')  # Formato 24 ore
 
                 # Creazione di una riga con i dati elaborati
-                data_rows.append({
+                new_row = {
                     'CRASH_DATE': date_text,
                     'CRASH_HOUR': crash_hour_24,  # Mantiene l'ora originale
                     'DAY': day,
@@ -125,7 +126,14 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
                     'DAY_OF_WEEK': day_of_week,
                     'QUARTER': quarter_of_year,
                     'DATE_POLICE_NOTIFIED': date_text_pol,
-                })
+                }
+
+                # Controllo dei duplicati
+                row_identifier = tuple(new_row.values())  # Usa i valori per identificare univocamente la riga
+                if row_identifier in seen_rows:
+                    continue  # Salta la riga se è un duplicato
+                seen_rows.add(row_identifier)  # Aggiungi la riga al set dei duplicati
+                data_rows.append(new_row)
 
             except Exception as e:
                 # Gestione di eventuali errori di parsing della data

@@ -47,12 +47,15 @@ def populate_database(file_path, table_name, connection):
             # Insert rows in batches
             batch_size = 1000
             batch = []
+            total_inserted = 0  # Tracks the total number of rows inserted
+
             for row in reader:
                 batch.append(row)
                 if len(batch) == batch_size:
                     cursor.executemany(insert_sql, batch)
                     connection.commit()
-                    print(f"Inserted {len(batch)} rows into {table_name}")
+                    total_inserted += len(batch)
+                    print(f"Inserted {total_inserted} rows into {table_name}")
                     batch = []
 
             # Insert any remaining rows
@@ -78,14 +81,14 @@ def main():
 
     # Map of file names to table names
     file_table_mapping = {
-        "Geography.csv": "GEOGRAPHY", # FATTO
-        #"CrashDate.csv": "CRASH_DATE",
-        #"Cause.csv": "CAUSE",
+        #"Geography.csv": "GEOGRAPHY", # fatto
+        #"Crash_date.csv": "CRASH_DATE",
+        #"Cause.csv": "CAUSE", #fatto
         #"Damage.csv": "FACT_DAMAGE", #BOH
         #"Vehicle.csv": "VEHICLE", #DICE CHE CI SONO DEI DUPLICATI NON CAPISCO DOVE
         #"Crash.csv": "CRASH",
-        #"Person.csv": "PERSON", #PERSON_ID DEVE ESSERE VARCHAR NON INT
-        #"RoadCondition.csv": "ROAD_CONDITION",
+        "Person.csv": "PERSON",
+        #"RoadCondition.csv": "ROAD_CONDITION", #fatto
 
     }
 
