@@ -14,12 +14,12 @@ def main():
     # Map of file names to table names
     file_table_mapping = {
         #"Geography.csv": "GEOGRAPHY", # fatto
-        #"Crash_date.csv": "CRASH_DATE",
+        "Crash_date.csv": "CRASH_DATE",
         #"Cause.csv": "CAUSE", #fatto
         #"Damage.csv": "FACT_DAMAGE", #BOH
-        #"Vehicle.csv": "VEHICLE", #DICE CHE CI SONO DEI DUPLICATI NON CAPISCO DOVE
+        #"Vehicle.csv": "VEHICLE", #fatto
         #"Crash.csv": "CRASH",
-        "Person.csv": "PERSON",
+        #"Person.csv": "PERSON", #fatto
         #"RoadCondition.csv": "ROAD_CONDITION", #fatto
 
     }
