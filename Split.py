@@ -8,7 +8,7 @@ merge_files('People_filled.csv', 'Vehicles_filled.csv', 'Crashes_filled.csv', 'R
 files_to_process = {
     #'Vehicle.csv': ('create_csv_for_table', ['CRASH_UNIT_ID', 'VEHICLE_ID', 'UNIT_TYPE', 'UNIT_NO', 'MAKE', 'MODEL',
     #                                         'VEHICLE_YEAR', 'VEHICLE_DEFECT', 'VEHICLE_USE', 'OCCUPANT_CNT',
-    #                                         'LIC_PLATE_STATE']),
+    #                                         'LIC_PLATE_STATE'], ''),
     #'Crash.csv': ('create_table_pk', ['RD_NO', 'FIRST_CONTACT_POINT', 'FIRST_CRASH_TYPE', 'REPORT_TYPE',
     #                                       'CRASH_TYPE', 'AIRBAG_DEPLOYED', 'MANEUVER', 'TRAVEL_DIRECTION',
     #                                       'EJECTION', 'INJURIES_TOTAL', 'INJURIES_INCAPACITATING',
@@ -16,7 +16,7 @@ files_to_process = {
     #                                       'INJURIES_NON_INDICATION', 'INJURIES_UNKNOWN',
     #                                       'MOST_SEVERE_INJURIES'], 'CRASH_PK'),
     #'Person.csv': ('create_csv_for_table', ['PERSON_ID', 'PERSON_TYPE', 'SEX', 'AGE', 'SAFETY_EQUIPMENT',
-    #                                        'INJURY_CLASSIFICATION', 'CITY']),
+    #                                        'INJURY_CLASSIFICATION', 'CITY'], ''),
     #'Geography.csv': ('create_table_pk', ['STREET_NO', 'STREET_DIRECTION', 'STREET_NAME',
     #                                           'LATITUDE', 'LONGITUDE', 'LOCATION'], 'GEOGRAPHY_PK'),
     #'Cause.csv': ('create_table_pk', ['PRIM_CONTRIBUTORY_CAUSE', 'SEC_CONTRIBUTORY_CAUSE',
@@ -25,10 +25,10 @@ files_to_process = {
     #                                               'DEVICE_CONDITION', 'ROADWAY_SURFACE_COND', 'ROAD_DEFECT',
     #                                               'TRAFFICWAY_TYPE', 'ALIGNMENT', 'POSTED_SPEED_LIMIT',
     #                                               'WEATHER_CONDITION'], 'ROAD_CONDITION_PK'),
-    #'Damage.csv': ('create_csv_for_table', ['DAMAGE', 'NUM_UNITS', 'CRASH_UNIT_ID', 'CAUSE_PK', 'CRASH_PK',
-    #                                        'ROAD_CONDITION_PK', 'DATE_PK', 'PERSON_ID']),
-    'Crash_date.csv': ('create_csv_for_data', ['CRASH_DATE', 'CRASH_HOUR', 'DAY', 'MONTH', 'YEAR', 'DAY_OF_WEEK',
-                                               'QUARTER', 'DATE_POLICE_NOTIFIED'], "DATE_PK")
+    'Damage.csv': ('create_csv_for_table', ['DAMAGE', 'NUM_UNITS', 'CRASH_UNIT_ID', 'CAUSE_PK', 'CRASH_PK',
+                                            'ROAD_CONDITION_PK', 'DATE_PK', 'PERSON_ID', 'GEOGRAPHY_PK'], ''),
+    #'Crash_date.csv': ('create_csv_for_data', ['CRASH_DATE', 'CRASH_HOUR', 'DAY', 'MONTH', 'YEAR', 'DAY_OF_WEEK',
+    #                                           'QUARTER', 'DATE_POLICE_NOTIFIED'], "DATE_PK")
 }
 
 # Processa i file

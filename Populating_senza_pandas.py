@@ -1,5 +1,6 @@
-from Utility_pop import connect_to_db, populate_database
+from Utility_pop import connect_to_db, populate_database, populate_fact_table
 import os
+import pyodbc
 
 # Main function
 def main():
@@ -16,21 +17,28 @@ def main():
         #"Geography.csv": "GEOGRAPHY",  # fatto
         #"Crash_date.csv": "CRASH_DATE",  # fatto
         #"Cause.csv": "CAUSE",  # fatto
-        # "Damage.csv": "FACT_DAMAGE",  # BOH
         # "Vehicle.csv": "VEHICLE",  # fatto
-        "Crash.csv": "CRASH",  # fatto
+        #"Crash.csv": "CRASH",  # fatto
         # "Person.csv": "PERSON",  # fatto
-        "RoadCondition.csv": "ROAD_CONDITION",  # fatto
+        #"RoadCondition.csv": "ROAD_CONDITION",  # fatto
     }
 
     # Itera sui file e popola il database
-    for file_name, table_name in file_table_mapping.items():
-        file_path = os.path.join(csv_directory, file_name)
-        if os.path.exists(file_path):
-            print(f"Processing file: {file_name}")
-            populate_database(file_path, table_name, connection)
-        else:
-            print(f"File not found: {file_path}")
+    #for file_name, table_name in file_table_mapping.items():
+     #   file_path = os.path.join(csv_directory, file_name)
+     #   if os.path.exists(file_path):
+     #       print(f"Processing file: {file_name}")
+     #       populate_database(file_path, table_name, connection)
+     #   else:
+     #       print(f"File not found: {file_path}")
+
+        # Popola la tabella FACT_DAMAGE
+    try:
+        print("Populating FACT_DAMAGE...")
+        populate_fact_table(connection)
+        print("FACT_DAMAGE population complete!")
+    except Exception as e:
+        print("Error populating FACT_DAMAGE:", e)
 
     # Chiude la connessione al database
     connection.close()
