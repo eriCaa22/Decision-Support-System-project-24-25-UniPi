@@ -1,3 +1,9 @@
+import csv
+import os
+import pyodbc
+from datetime import datetime
+
+
 ### FUNZIONI PER IL POPOLAMENTO
 
 # Connect to the database
@@ -72,21 +78,49 @@ def populate_database(file_path, table_name, connection):
 
 ## funzione per popolare la fact table
 
-import csv
-import os
-import pyodbc
+def get_primary_key_from_csv(file_path, key_column, matching_column, reference_value):
 
-# Funzione per ottenere la chiave primaria dal CSV corrispondente
-def get_primary_key_from_csv(file_path, key_column, matching_value):
     try:
         with open(file_path, mode="r", encoding="utf-8") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                if row[key_column] == matching_value:  # Cambia "id" con la colonna di matching appropriata
+                csv_value = row[matching_column].strip()
+
+                # Confronto standard per colonne non di tipo data
+                if csv_value == reference_value:
                     return row[key_column]
+        print(f"Valore non trovato: {reference_value} in colonna {matching_column} del file {file_path}")
     except Exception as e:
-        print(f"Error reading {file_path}:", e)
+        print(f"Errore nella lettura del file {file_path}: {e}")
     return None
+
+def get_primary_key_data(file_path, key_column, matching_date_column, matching_time_column, reference_value):
+
+    from datetime import datetime
+
+    try:
+        # Separare data e ora dal riferimento
+        reference_datetime = datetime.strptime(reference_value, "%m/%d/%Y %I:%M:%S %p")
+        reference_date = reference_datetime.date()
+        reference_time = reference_datetime.time()
+
+        with open(file_path, mode="r", encoding="utf-8") as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                # Converti data e ora dal CSV
+                csv_date = datetime.strptime(row[matching_date_column].strip(), "%Y-%m-%d").date()
+                csv_time = datetime.strptime(row[matching_time_column].strip(), "%H:%M:%S").time()
+
+                # Confronta data e ora
+                if csv_date == reference_date and csv_time == reference_time:
+                    return row[key_column]
+        print(f"Valore non trovato: {reference_value} in file {file_path}")
+    except ValueError as e:
+        print(f"Errore nella conversione di data/ora. Reference: {reference_value} - {e}")
+    except Exception as e:
+        print(f"Errore nella lettura del file {file_path}: {e}")
+    return None
+
 
 def populate_fact_table(connection):
     csv_directory = "C:/Users/al797/Documents/GitHub/LDS-project-24-25"
@@ -103,7 +137,7 @@ def populate_fact_table(connection):
     try:
         with open(file_paths["merged"], mode="r", encoding="utf-8") as merged_file:
             reader = csv.DictReader(merged_file)
-
+            cursor = connection.cursor()
             insert_sql = """ 
                 INSERT INTO FACT_DAMAGE (
                     DAMAGE, NUM_UNITS, CRASH_UNIT_ID_FK, PERSON_ID_FK, 
@@ -111,28 +145,35 @@ def populate_fact_table(connection):
                     CAUSE_PK_FK, GEOGRAPHY_PK_FK
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-
-            cursor = connection.cursor()
             batch = []
             batch_size = 1000
             total_inserted = 0
 
-            for i, row in enumerate(reader):
-                if i % 100 == 0:  # Stampa un log ogni 100 righe
-                    print(f"Processing row {i}...")
-
-                # Ottieni i dati principali da merged.csv
+            for row in reader:
+                # Prendi i dati principali
                 damage = row["DAMAGE"]
                 num_units = row["NUM_UNITS"]
                 crash_unit_id_fk = row["CRASH_UNIT_ID"]
                 person_id_fk = row["PERSON_ID"]
 
-                # Ottieni le chiavi esterne dai rispettivi CSV
-                crash_pk = get_primary_key_from_csv(file_paths["crash"], "CRASH_PK", row["RD_NO"])
-                road_condition_pk = get_primary_key_from_csv(file_paths["road_condition"], "ROAD_CONDITION_PK", row["TRAFFIC_CONTROL_DEVICE"])
-                date_pk = get_primary_key_from_csv(file_paths["crash_date"], "DATE_PK", row["CRASH_DATE"])
-                cause_pk = get_primary_key_from_csv(file_paths["cause"], "CAUSE_PK", row["PRIM_CONTRIBUTORY_CAUSE"])
-                geography_pk = get_primary_key_from_csv(file_paths["geography"], "GEOGRAPHY_PK", row["LOCATION"])
+                # Ottieni le chiavi esterne
+                road_condition_pk = get_primary_key_from_csv(file_paths["road_condition"], "ROAD_CONDITION_PK", "TRAFFIC_CONTROL_DEVICE", row["TRAFFIC_CONTROL_DEVICE"])
+                cause_pk = get_primary_key_from_csv(file_paths["cause"], "CAUSE_PK", "PRIM_CONTRIBUTORY_CAUSE", row["PRIM_CONTRIBUTORY_CAUSE"])
+                geography_pk = get_primary_key_from_csv(file_paths["geography"], "GEOGRAPHY_PK", "LOCATION", row["LOCATION"])
+                date_pk = get_primary_key_data(
+                    file_path=file_paths["crash_date"],
+                    key_column="DATE_PK",
+                    matching_date_column="CRASH_DATE",
+                    matching_time_column="CRASH_HOUR",
+                    reference_value=row["CRASH_DATE"]  # Questo valore deve contenere sia data che ora
+                )
+
+                crash_pk = get_primary_key_from_csv(
+                    file_path=file_paths["crash"],
+                    key_column="CRASH_PK",
+                    matching_column="RD_NO",
+                    reference_value=row["RD_NO"]
+                )
 
                 batch.append((damage, num_units, crash_unit_id_fk, person_id_fk, crash_pk, road_condition_pk, date_pk, cause_pk, geography_pk))
 
