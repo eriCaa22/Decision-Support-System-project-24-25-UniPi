@@ -1,6 +1,5 @@
 import csv
 from datetime import datetime
-import pyodbc
 
 ### FUNZIONI PER SPLIT
 
@@ -82,41 +81,85 @@ def create_csv_for_table(input_file, output_file, columns_to_keep, date_column=N
             writer.writerow(filtered_row)
 
 
-def create_csv_for_data(input_file, output_file, columns_to_keep):
+import csv
+
+
+import csv
+
+def create_table_pk(input_file, output_file, columns_to_keep, pk_column_name="ID"):
+
+    try:
+        seen_rows = set()  # Per tracciare i duplicati
+        pk_value = 1  # Valore iniziale della chiave primaria
+
+        with open(input_file, mode='r', encoding='utf-8') as input_csv, \
+                open(output_file, mode='w', encoding='utf-8', newline='') as output_csv:
+            reader = csv.DictReader(input_csv)
+
+            # Verifica colonne valide
+            valid_columns = [col for col in columns_to_keep if col in reader.fieldnames]
+            if not valid_columns:
+                raise ValueError(f"Nessuna colonna valida trovata nel file: {input_file}")
+
+            # Configura il writer con la chiave primaria e le colonne valide
+            fieldnames = [pk_column_name] + valid_columns
+            writer = csv.DictWriter(output_csv, fieldnames=fieldnames)
+            writer.writeheader()
+
+            # Iterazione sulle righe del file di input
+            for row in reader:
+                # Filtra solo le colonne valide
+                filtered_row = {col: row[col] for col in valid_columns if col in row}
+
+                # Genera una chiave unica per identificare duplicati
+                row_identifier = tuple(filtered_row.values())
+                if row_identifier in seen_rows:
+                    continue  # Salta i duplicati
+                seen_rows.add(row_identifier)
+
+                # Aggiungi la chiave primaria incrementale
+                filtered_row[pk_column_name] = pk_value
+                pk_value += 1
+
+                # Scrivi la riga nel file di output
+                writer.writerow(filtered_row)
+
+        print(f"Dimension CSV creato con successo: {output_file}. Righe totali: {pk_value - 1}")
+
+    except Exception as e:
+        print(f"Errore nella creazione del CSV per {output_file}: {e}")
+
+
+
+def create_csv_for_data(input_file, output_file, columns_to_keep, pk_column_name):
+
     # Lista per salvare le righe elaborate
     data_rows = []
-    seen_rows = set()  # Set per tracciare le righe già viste
+    seen_rows = set()  # Set per tracciare i duplicati
+    pk_value = 1  # Valore iniziale per la chiave primaria
 
     with open(input_file, mode='r', encoding='utf-8') as input_csv, \
             open(output_file, mode='w', encoding='utf-8', newline='') as output_csv:
         reader = csv.DictReader(input_csv)
 
-        # Identifica le colonne da mantenere che esistono nel dataset
-
-        valid_columns = []
-        for col in columns_to_keep:
-            if col in reader.fieldnames:
-                valid_columns.append(col)
-
+        # Identifica le colonne valide
+        valid_columns = [col for col in columns_to_keep if col in reader.fieldnames]
         if not valid_columns:
             raise ValueError("Nessuna delle colonne specificate è presente nel dataset.")
 
-        # Configura il writer con le colonne aggiunte
-        fieldnames = [
+        # Configura il writer con la chiave primaria e le altre colonne
+        fieldnames = [pk_column_name] + [
             'CRASH_DATE', 'CRASH_HOUR',
-            'DAY', 'MONTH', 'YEAR', 'DAY_OF_WEEK', 'QUARTER',  'DATE_POLICE_NOTIFIED'
+            'DAY', 'MONTH', 'YEAR', 'DAY_OF_WEEK', 'QUARTER', 'DATE_POLICE_NOTIFIED'
         ]
         writer = csv.DictWriter(output_csv, fieldnames=fieldnames)
         writer.writeheader()
 
-        # Iterazione su ogni riga del file CSV
+        # Iterazione sulle righe del file CSV
         for row in reader:
             try:
-                # Filtra le colonne richieste
-                filtered_row = {}
-                for col in valid_columns:
-                    if col in row:  # Verifica se la colonna esiste nella riga
-                        filtered_row[col] = row[col]
+                # Filtra solo le colonne richieste
+                filtered_row = {col: row[col] for col in valid_columns if col in row}
 
                 # Estrazione e conversione del campo CRASH_DATE
                 crash_date_time = filtered_row.get('CRASH_DATE')  # Es. "2015-09-01 17:00:00"
@@ -140,6 +183,7 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
 
                 # Creazione di una riga con i dati elaborati
                 new_row = {
+                    pk_column_name: pk_value,  # Chiave primaria progressiva
                     'CRASH_DATE': date_text,
                     'CRASH_HOUR': crash_hour_24,  # Mantiene l'ora originale
                     'DAY': day,
@@ -151,11 +195,12 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
                 }
 
                 # Controllo dei duplicati
-                row_identifier = tuple(new_row.values())  # Usa i valori per identificare univocamente la riga
+                row_identifier = tuple(list(new_row.values())[1:])  # Converte dict_values in lista prima dello slicing
                 if row_identifier in seen_rows:
-                    continue  # Salta la riga se è un duplicato
+                    continue  # Salta i duplicati
                 seen_rows.add(row_identifier)  # Aggiungi la riga al set dei duplicati
                 data_rows.append(new_row)
+                pk_value += 1  # Incrementa la chiave primaria
 
             except Exception as e:
                 # Gestione di eventuali errori di parsing della data
@@ -164,70 +209,4 @@ def create_csv_for_data(input_file, output_file, columns_to_keep):
 
         # Scrive le righe elaborate nel file di output
         writer.writerows(data_rows)
-
-### FUNZIONI PER IL POPOLAMENTO
-
-# Connect to the database
-def connect_to_db():
-    SERVER = 'lds.di.unipi.it'
-    DATABASE = 'Group_ID_24_DB'
-    USERNAME = 'Group_ID_24'
-    PASSWORD = 'IMTGP44N'
-    DRIVER = 'ODBC Driver 17 for SQL Server'
-
-    try:
-        connection = pyodbc.connect(
-            f'DRIVER={{{DRIVER}}};'
-            f'SERVER={SERVER};'
-            f'DATABASE={DATABASE};'
-            f'UID={USERNAME};'
-            f'PWD={PASSWORD}'
-        )
-        print("Database connection successful!")
-        return connection
-    except Exception as e:
-        print("Error connecting to database:", e)
-        return None
-
-# Read and insert CSV data
-def populate_database(file_path, table_name, connection):
-    try:
-        # Open the CSV file
-        with open(file_path, mode='r', encoding='utf-8') as file:
-            reader = csv.reader(file)
-
-            # Get the column names from the first row
-            columns = next(reader)  # Read the header row
-            columns_str = ", ".join(columns)
-            placeholders = ", ".join(["?"] * len(columns))
-
-            # Prepare the insert statement
-            insert_sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
-
-            # Create a cursor
-            cursor = connection.cursor()
-
-            # Insert rows in batches
-            batch_size = 1000
-            batch = []
-            total_inserted = 0  # Tracks the total number of rows inserted
-
-            for row in reader:
-                batch.append(row)
-                if len(batch) == batch_size:
-                    cursor.executemany(insert_sql, batch)
-                    connection.commit()
-                    total_inserted += len(batch)
-                    print(f"Inserted {total_inserted} rows into {table_name}")
-                    batch = []
-
-            # Insert any remaining rows
-            if batch:
-                cursor.executemany(insert_sql, batch)
-                connection.commit()
-                print(f"Inserted {len(batch)} rows into {table_name}")
-
-        print(f"Data successfully inserted into {table_name}!")
-    except Exception as e:
-        print(f"Error inserting data into {table_name}:", e)
-
+        print(f"CSV con chiavi primarie creato con successo: {output_file}. Righe totali: {pk_value - 1}")
