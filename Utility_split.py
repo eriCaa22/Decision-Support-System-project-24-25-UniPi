@@ -1,5 +1,5 @@
-import csv
 from datetime import datetime
+import csv
 
 ### FUNZIONI PER SPLIT
 
@@ -132,10 +132,9 @@ def create_table_pk(input_file, output_file, columns_to_keep, pk_column_name="ID
 
 
 def create_csv_for_data(input_file, output_file, columns_to_keep, pk_column_name):
-
-    # Lista per salvare le righe elaborate
+    # Set per tracciare le combinazioni uniche
+    seen_combinations = set()  # Basato sui campi essenziali
     data_rows = []
-    seen_rows = set()  # Set per tracciare i duplicati
     pk_value = 1  # Valore iniziale per la chiave primaria
 
     with open(input_file, mode='r', encoding='utf-8') as input_csv, \
@@ -158,55 +157,175 @@ def create_csv_for_data(input_file, output_file, columns_to_keep, pk_column_name
         # Iterazione sulle righe del file CSV
         for row in reader:
             try:
-                # Filtra solo le colonne richieste
-                filtered_row = {col: row[col] for col in valid_columns if col in row}
+                # Converti CRASH_DATE
+                crash_date_time = row.get('CRASH_DATE')  # Es. "2015-09-01 17:00:00"
+                if not crash_date_time:
+                    raise ValueError("CRASH_DATE mancante")
 
-                # Estrazione e conversione del campo CRASH_DATE
-                crash_date_time = filtered_row.get('CRASH_DATE')  # Es. "2015-09-01 17:00:00"
-                date_police_not = filtered_row.get('DATE_POLICE_NOTIFIED')  # Es. "09/01/2015 06:45:00 PM"
-
-                # Conversione delle stringhe in oggetti datetime
                 date = datetime.strptime(crash_date_time, '%m/%d/%Y %I:%M:%S %p')
-                date_pol = datetime.strptime(date_police_not, '%m/%d/%Y %I:%M:%S %p')  # Gestisce AM/PM
+                date_text = date.strftime('%Y-%m-%d')  # Normalizza la data
 
-                # Estrazione delle informazioni richieste per crash_date
-                date_text = date.strftime('%Y-%m-%d')  # Solo la data in formato yyyy-mm-dd
-                crash_hour_24 = date.strftime('%H:%M:%S')
-                year = date.year
-                month = date.month
-                day = date.day
-                day_of_week = date.strftime('%A')  # Giorno della settimana (es. "Thursday")
-                quarter_of_year = ((month - 1) // 3 + 1)  # Calcolo del trimestre
+                # Estrai l'ora come numero intero
+                crash_hour_24 = int(date.strftime('%H'))  # Ora senza minuti o secondi
 
-                # Conversione di date_police_notified in formato a 24 ore
-                date_text_pol = date_pol.strftime('%Y-%m-%d %H:%M:%S')  # Formato 24 ore
+                # Converti DATE_POLICE_NOTIFIED
+                date_police_not = row.get('DATE_POLICE_NOTIFIED')
+                if date_police_not:
+                    date_pol = datetime.strptime(date_police_not, '%m/%d/%Y %I:%M:%S %p')
+                    date_text_pol = date_pol.strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    date_text_pol = None  # Gestione dei valori mancanti
 
-                # Creazione di una riga con i dati elaborati
+                # Campi essenziali per il controllo dei duplicati
+                combination_key = (
+                    date_text,
+                    crash_hour_24,
+                    date.day,
+                    date.month,
+                    date.year,
+                    date.strftime('%A'),
+                    ((date.month - 1) // 3 + 1),
+                    date_text_pol
+                )
+
+                # Se la combinazione è già stata vista, salta la riga
+                if combination_key in seen_combinations:
+                    continue
+                seen_combinations.add(combination_key)
+
+                # Genera la riga con i dati elaborati
                 new_row = {
-                    pk_column_name: pk_value,  # Chiave primaria progressiva
+                    pk_column_name: pk_value,
                     'CRASH_DATE': date_text,
-                    'CRASH_HOUR': crash_hour_24,  # Mantiene l'ora originale
-                    'DAY': day,
-                    'MONTH': month,
-                    'YEAR': year,
-                    'DAY_OF_WEEK': day_of_week,
-                    'QUARTER': quarter_of_year,
+                    'CRASH_HOUR': crash_hour_24,
+                    'DAY': date.day,
+                    'MONTH': date.month,
+                    'YEAR': date.year,
+                    'DAY_OF_WEEK': date.strftime('%A'),
+                    'QUARTER': ((date.month - 1) // 3 + 1),
                     'DATE_POLICE_NOTIFIED': date_text_pol,
                 }
 
-                # Controllo dei duplicati
-                row_identifier = tuple(list(new_row.values())[1:])  # Converte dict_values in lista prima dello slicing
-                if row_identifier in seen_rows:
-                    continue  # Salta i duplicati
-                seen_rows.add(row_identifier)  # Aggiungi la riga al set dei duplicati
+                # Aggiungi la riga elaborata alla lista
                 data_rows.append(new_row)
                 pk_value += 1  # Incrementa la chiave primaria
 
             except Exception as e:
-                # Gestione di eventuali errori di parsing della data
                 print(f"Errore nell'elaborazione della riga: {row}. Errore: {e}")
                 continue
 
         # Scrive le righe elaborate nel file di output
         writer.writerows(data_rows)
         print(f"CSV con chiavi primarie creato con successo: {output_file}. Righe totali: {pk_value - 1}")
+
+
+def normalize_date(date_str, input_format, output_format='%Y-%m-%d'):
+    """
+    Normalizza una data in un formato specificato.
+    :param date_str: La stringa di input della data
+    :param input_format: Il formato della data di input
+    :param output_format: Il formato desiderato della data di output
+    :return: La data normalizzata come stringa o None in caso di errore
+    """
+    try:
+        return datetime.strptime(date_str, input_format).strftime(output_format)
+    except ValueError:
+        return None
+
+def extract_hour(hour_str):
+    """
+    Estrae solo l'ora come numero da una stringa oraria.
+    :param hour_str: La stringa oraria (es. "15:00:00").
+    :return: L'ora come intero (es. 15) o None in caso di errore.
+    """
+    try:
+        return int(hour_str.split(':')[0])
+    except (ValueError, AttributeError):
+        return None
+
+def normalize_datetime(datetime_str, input_format, output_format='%Y-%m-%d %H:%M:%S'):
+    """
+    Normalizza una data e ora in un formato specificato.
+    :param datetime_str: La stringa di input di data e ora
+    :param input_format: Il formato della data e ora di input
+    :param output_format: Il formato desiderato della data e ora di output
+    :return: La data e ora normalizzata come stringa o None in caso di errore
+    """
+    try:
+        return datetime.strptime(datetime_str, input_format).strftime(output_format)
+    except ValueError:
+        return None
+
+def create_csv_for_damage(merged_file, geography_file, cause_file, crash_file, road_condition_file, date_file,
+                          output_file):
+    import csv
+
+    geography_data = index_file(geography_file, 'LOCATION')
+    cause_data = index_file(cause_file, 'PRIM_CONTRIBUTORY_CAUSE')
+    crash_data = index_file(crash_file, 'RD_NO')
+    road_condition_data = index_file(road_condition_file, 'TRAFFIC_CONTROL_DEVICE')
+
+    # Indicizza Crash_date.csv
+    date_data = {}
+    with open(date_file, mode='r', encoding='utf-8') as date_csv:
+        reader = csv.DictReader(date_csv)
+        for row in reader:
+            crash_date = normalize_date(row.get('CRASH_DATE', '').strip(), '%Y-%m-%d', '%Y-%m-%d')
+            crash_hour = extract_hour(row.get('CRASH_HOUR', '').strip())
+            date_police_notified = normalize_datetime(row.get('DATE_POLICE_NOTIFIED', '').strip(),
+                                                      '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S')
+            key = (crash_date, crash_hour, date_police_notified)
+            date_data[key] = row.get('DATE_PK', 'NOT_FOUND')
+
+    with open(merged_file, mode='r', encoding='utf-8') as merged_csv, \
+            open(output_file, mode='w', encoding='utf-8', newline='') as damage_csv:
+
+        reader = csv.DictReader(merged_csv)
+        fieldnames = ['DAMAGE', 'NUM_UNITS', 'CRASH_UNIT_ID', 'CAUSE_PK', 'CRASH_PK',
+                      'ROAD_CONDITION_PK', 'DATE_PK', 'PERSON_ID', 'GEOGRAPHY_PK']
+        writer = csv.DictWriter(damage_csv, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for row in reader:
+            try:
+                crash_date = normalize_date(row.get('CRASH_DATE', '').strip(), '%m/%d/%Y %I:%M:%S %p', '%Y-%m-%d')
+                crash_hour = row.get('CRASH_HOUR', '').strip()
+                if ":" in crash_hour:
+                    crash_hour = int(crash_hour.split(':')[0])
+                elif crash_hour.isdigit():
+                    crash_hour = int(crash_hour)
+                else:
+                    crash_hour = None
+
+                date_police_notified = row.get('DATE_POLICE_NOTIFIED', '').strip()
+                if date_police_notified:
+                    date_police_notified = normalize_datetime(date_police_notified, '%m/%d/%Y %I:%M:%S %p', '%Y-%m-%d %H:%M:%S')
+                else:
+                    date_police_notified = None
+
+                key = (crash_date, crash_hour, date_police_notified)
+
+                date_pk = date_data.get(key, 'NOT_FOUND')
+                if date_pk == 'NOT_FOUND':
+                    print(f"Data non trovata per la chiave: {key}")
+
+                new_row = {
+                    'DAMAGE': row.get('DAMAGE', ''),
+                    'NUM_UNITS': row.get('NUM_UNITS', ''),
+                    'CRASH_UNIT_ID': row.get('CRASH_UNIT_ID', ''),
+                    'CAUSE_PK': cause_data.get(row.get('PRIM_CONTRIBUTORY_CAUSE', '').strip(), {}).get('CAUSE_PK', 'NOT_FOUND'),
+                    'CRASH_PK': crash_data.get(row.get('RD_NO', '').strip(), {}).get('CRASH_PK', 'NOT_FOUND'),
+                    'ROAD_CONDITION_PK': road_condition_data.get(row.get('TRAFFIC_CONTROL_DEVICE', '').strip(), {}).get(
+                        'ROAD_CONDITION_PK', 'NOT_FOUND'),
+                    'DATE_PK': date_pk,
+                    'PERSON_ID': row.get('PERSON_ID', ''),
+                    'GEOGRAPHY_PK': geography_data.get(row.get('LOCATION', '').strip(), {}).get('GEOGRAPHY_PK', 'NOT_FOUND')
+                }
+
+                writer.writerow(new_row)
+
+            except Exception as e:
+                print(f"Errore nell'elaborazione della riga: {row}. Errore: {e}")
+                continue
+
+    print(f"File {output_file} creato con successo.")
