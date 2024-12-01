@@ -25,7 +25,7 @@ files_to_process = {
     #                                               'DEVICE_CONDITION', 'ROADWAY_SURFACE_COND', 'ROAD_DEFECT',
     #                                               'TRAFFICWAY_TYPE', 'ALIGNMENT', 'POSTED_SPEED_LIMIT',
     #                                               'WEATHER_CONDITION'], 'ROAD_CONDITION_PK'),
-    'Damage_new.csv': ('create_csv_for_damage', ['DAMAGE', 'NUM_UNITS', 'CRASH_UNIT_ID', 'CAUSE_PK', 'CRASH_PK',
+    'Damage_2.csv': ('create_csv_for_damage', ['DAMAGE', 'NUM_UNITS', 'CRASH_UNIT_ID', 'CAUSE_PK', 'CRASH_PK',
                                             'ROAD_CONDITION_PK', 'DATE_PK', 'PERSON_ID', 'GEOGRAPHY_PK'], ''),
     #'Crash_date_2.csv': ('create_csv_for_data', ['CRASH_DATE', 'CRASH_HOUR', 'DAY', 'MONTH', 'YEAR', 'DAY_OF_WEEK',
     #                                             'QUARTER', 'DATE_POLICE_NOTIFIED'], "DATE_PK")
