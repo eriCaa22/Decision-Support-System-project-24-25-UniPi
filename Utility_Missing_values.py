@@ -82,25 +82,23 @@ def fill_missing_geolocation(data, street_no_col, street_dir_col, street_name_co
 
     return data
 
-
+# we don't use this function bc we already had the dict
 def calculate_mean_coordinates(dataset, street_name, latitude, longitude):
 
     street_coordinates = defaultdict(list)
 
-    # Itera sul dataset per raccogliere le coordinate
     for row in dataset:
         street_name = row.get(street_name)
         latitude = row.get(latitude)
         longitude = row.get(longitude)
 
-        # Verifica che i valori siano validi
         if street_name and latitude is not None and longitude is not None:
             street_coordinates[street_name].append((latitude, longitude))
 
-    # Calcola la media delle coordinate per ogni strada
+    #compute mean for each row
     street_mean_coordinates = {}
     for street_name, coords in street_coordinates.items():
-        if coords:  # Verifica che ci siano coordinate valide
+        if coords:
             avg_latitude = sum(coord[0] for coord in coords) / len(coords)
             avg_longitude = sum(coord[1] for coord in coords) / len(coords)
             street_mean_coordinates[street_name] = {

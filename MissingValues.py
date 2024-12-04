@@ -42,46 +42,8 @@ crashes = apply_replacements(crashes, replacements_crashes_location, 'LOCATION')
 crashes = fill_missing_geolocation(crashes, 'STREET_NO', 'STREET_DIRECTION', 'STREET_NAME', 'LATITUDE', 'LONGITUDE', 'LOCATION')
 
 
-# ###### Per i null values che con GeoPy non siamo riusciti a fillare, , abbiamo creato con pandas un dizionario che, per ogni strada che non ha lat e log, calcola la media di latitudine e longitudine per i record riferiti alla stessa strada che hanno la location.
-# ##### Alcune strade non hanno altri record che presentano la location, perciò andremo ad eliminarle
-""" 
-from collections import defaultdict
-
-# Struttura per raccogliere le coordinate delle strade
-street_coordinates = defaultdict(list)
-
-# Itera sul dataset
-for row in crashes:
-    street_name = row.get('STREET_NAME')  # Supponendo che le colonne siano chiavi nel dizionario
-    latitude = row.get('LATITUDE')
-    longitude = row.get('LONGITUDE')
-
-    # Aggiungi le coordinate valide alla lista corrispondente alla strada
-    if street_name and latitude is not None and longitude is not None:
-        street_coordinates[street_name].append((latitude, longitude))
-
-# Calcola la media per ogni strada e costruisci il dizionario
-street_mean_coordinates = {}
-
-for street_name, coords in street_coordinates.items():
-    if coords:  # Verifica che ci siano coordinate da calcolare
-        avg_latitude = sum(coord[0] for coord in coords) / len(coords)
-        avg_longitude = sum(coord[1] for coord in coords) / len(coords)
-        street_mean_coordinates[street_name] = {'latitude': avg_latitude, 'longitude': avg_longitude}
-
-# Ora il dizionario `street_mean_coordinates` è pronto
-# Esempio di chiamata della funzione
-""
-street_mean_coordinates = calculate_mean_coordinates(
-    dataset=crashes,
-    street_name_key='STREET_NAME',
-    latitude_key='LATITUDE',
-    longitude_key='LONGITUDE'
-)
-
-# Il risultato sarà il dizionario `street_mean_coordinates` con le medie delle coordinate.
-print(street_mean_coordinates)
-"""
+#### Per i null values che con GeoPy non siamo riusciti a fillare, abbiamo creato un dizionario che, per ogni strada che non ha lat e log,
+#### riporta la media di latitudine e longitudine per i record riferiti alla stessa strada che hanno la location.
 
 street_mean_coordinates = {
 
@@ -103,7 +65,7 @@ street_mean_coordinates = {
     'WACKER SUB DR': {'latitude': 41.888183762, 'longitude': -87.622614368}
 }
 
-# %%
+
 for street_name, coordinates in street_mean_coordinates.items():
     latitude = coordinates['latitude']
     longitude = coordinates['longitude']
@@ -182,8 +144,6 @@ for record in people:
             record["DAMAGE"] = round(float(record["DAMAGE"]), 2)
         except ValueError:
             pass
-
-
 
 
 ##########################################################################

@@ -28,33 +28,27 @@ def connect_to_db():
         print("Error connecting to database:", e)
         return None
 
-# Read and insert CSV data
 def populate_database(file_path, table_name, connection):
     import csv
     try:
-        # Open the CSV file
         with open(file_path, mode='r', encoding='utf-8') as file:
             reader = csv.reader(file)
 
-            # Get the column names from the first row
-            csv_columns = next(reader)  # Legge l'intestazione
+            csv_columns = next(reader)  # name of cols
 
             db_columns = csv_columns
 
-            # Convert columns to SQL format
             columns_str = ", ".join(db_columns)
             placeholders = ", ".join(["?"] * len(db_columns))
 
-            # Prepare the insert statement
+            # insert statement
             insert_sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
 
-            # Create a cursor
             cursor = connection.cursor()
 
-            # Insert rows in batches
             batch_size = 1000
             batch = []
-            total_inserted = 0  # Tracks the total number of rows inserted
+            total_inserted = 0  #total number of rows inserted
 
             for row in reader:
                 batch.append(row)
@@ -65,7 +59,6 @@ def populate_database(file_path, table_name, connection):
                     print(f"Inserted {total_inserted} rows into {table_name}")
                     batch = []
 
-            # Insert any remaining rows
             if batch:
                 cursor.executemany(insert_sql, batch)
                 connection.commit()
@@ -87,33 +80,30 @@ column_mapping = {
     'PERSON_ID': 'PERSON_ID_FK',
     'GEOGRAPHY_PK': 'GEOGRAPHY_PK_FK'
 }
+
 def populate_database_with_mapping(file_path, table_name, connection, column_mapping):
     try:
-        # Aprire il file CSV
         with open(file_path, mode='r', encoding='utf-8') as file:
             reader = csv.reader(file)
 
-            # Leggere l'intestazione e trasformarla in base al mapping
-            csv_columns = next(reader)  # Legge l'intestazione
+            csv_columns = next(reader)
             db_columns = [column_mapping[col] for col in csv_columns if col in column_mapping]
 
-            # Convertire colonne in formato SQL
             columns_str = ", ".join(db_columns)
             placeholders = ", ".join(["?"] * len(db_columns))
 
-            # Preparare la query di inserimento
             insert_sql = f"INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders})"
 
-            # Creare un cursore
             cursor = connection.cursor()
 
-            # Inserire i dati
             batch_size = 1000
             batch = []
-            total_inserted = 0  # Per tracciare il numero totale di righe inserite
+            total_inserted = 0
+
+            #since here is like the previous func
 
             for row in reader:
-                # Applicare il mapping ai dati
+                #here we map the row because have different names from the fact table
                 mapped_row = [row[csv_columns.index(col)] for col in csv_columns if col in column_mapping]
                 batch.append(mapped_row)
                 if len(batch) == batch_size:
@@ -123,7 +113,6 @@ def populate_database_with_mapping(file_path, table_name, connection, column_map
                     print(f"Inserite {total_inserted} righe nella tabella {table_name}")
                     batch = []
 
-            # Inserire le righe rimanenti
             if batch:
                 cursor.executemany(insert_sql, batch)
                 connection.commit()
